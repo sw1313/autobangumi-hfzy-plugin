@@ -1,0 +1,30 @@
+{
+  "config": {
+    "hfzy_set": {
+      "title": "皇甫朝云杂项功能",
+      "desc": "播放按钮、RSS 填入名称优先、过滤后集数、RSS 复制、过滤命中标记、TMDB 成人条目、填写季度优先可以分别开关。",
+      "player_enable": "下载列表播放按钮",
+      "rss_name_priority": "RSS 优先使用填入名称",
+      "rss_episode_count": "季度后显示过滤后的版本和视频",
+      "rss_episode_count_desc": "按当前过滤规则统计剩下的发布版本和视频条数，用来检查规则是否漏了或者全部挡住。",
+      "rss_copy_fix": "修复 RSS 复制按钮",
+      "rss_copy_fix_desc": "用 http 打开页面时，RSS 源旁边的复制图标也能复制完整链接。",
+      "rss_filter_hit": "标记命中的过滤规则",
+      "rss_filter_hit_desc": "某条过滤正则命中了 RSS 标题时，用橘黄色框标出这个标签。",
+      "tmdb_include_adult": "打开 TMDB 成人条目",
+      "tmdb_include_adult_desc": "搜索剧集和电影时包含 TMDB 标记为成人的动画。关闭后这些条目不会出现在搜索结果里。",
+      "rss_form_season": "添加时以填写的季度为准",
+      "rss_form_season_desc": "收集和订阅时，对话框里的季度优先于文件名上的季号。文件写着第三季、季度填 1，也会按第 1 季下载。同一条 RSS 里如果混了好几季，都会进这个季度。",
+      "episode_invalid": "过滤无效",
+      "episode_failed": "无法统计"
+    }
+  },
+  "downloader": {
+    "player": {
+      "play": "播放",
+      "web": "网页播放",
+      "no_media": "未找到可播放媒体文件",
+      "resolve_failed": "获取播放地址失败"
+    }
+  }
+}

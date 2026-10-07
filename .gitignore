@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+node_modules/
+dist/
+
+# Never publish the runtime config.
+config/hfzy.json
+.env
+.env.*
+!.env.example

@@ -1,0 +1,30 @@
+{
+  "config": {
+    "hfzy_set": {
+      "title": "Huangfu misc features",
+      "desc": "The play button, RSS name priority, filtered count, RSS copy fix, filter-hit marks, adult TMDB titles, and typed season priority can be toggled separately.",
+      "player_enable": "Downloader play button",
+      "rss_name_priority": "Prefer filled RSS name",
+      "rss_episode_count": "Show filtered versions and videos after the season",
+      "rss_episode_count_desc": "Count release versions and videos left in the current RSS after filters.",
+      "rss_copy_fix": "Fix the RSS copy button",
+      "rss_copy_fix_desc": "Copy the full RSS link from the icon when the page is opened over http.",
+      "rss_filter_hit": "Mark filters that match",
+      "rss_filter_hit_desc": "Draw an orange box around a filter tag when its pattern matches an RSS title.",
+      "tmdb_include_adult": "Include adult TMDB titles",
+      "tmdb_include_adult_desc": "Include titles TMDB marks as adult when searching TV and movies. Turn this off to leave them out.",
+      "rss_form_season": "Prefer the typed season",
+      "rss_form_season_desc": "When collecting or subscribing, the season in the dialog wins over the season in the filename. A file marked season 3 is still downloaded as the season you typed. Every season in that RSS is saved under that season.",
+      "episode_invalid": "Invalid filter",
+      "episode_failed": "Unavailable"
+    }
+  },
+  "downloader": {
+    "player": {
+      "play": "Play",
+      "web": "Web player",
+      "no_media": "No playable media file found",
+      "resolve_failed": "Failed to resolve media URL"
+    }
+  }
+}

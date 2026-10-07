@@ -1,0 +1,9 @@
+{
+    "player_enable": true,
+    "rss_name_priority": true,
+    "rss_episode_count": true,
+    "rss_copy_fix": true,
+    "rss_filter_hit": true,
+    "tmdb_include_adult": true,
+    "rss_form_season": true
+}
