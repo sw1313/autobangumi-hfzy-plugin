@@ -9,6 +9,7 @@ export interface HfzyMisc {
   revision_conflict_policy: 'hold' | 'replace';
   revision_group_fallback: boolean;
   revision_single_video: boolean;
+  downloader_filter: boolean;
 }
 
 export const defaultHfzyConfig: HfzyMisc = {
@@ -22,4 +23,5 @@ export const defaultHfzyConfig: HfzyMisc = {
   revision_conflict_policy: 'hold',
   revision_group_fallback: true,
   revision_single_video: true,
+  downloader_filter: true,
 };

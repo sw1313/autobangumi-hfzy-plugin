@@ -3,6 +3,8 @@ import type { BangumiRule } from '#/bangumi';
 import type { Config } from '#/config';
 import type { QbTorrentInfo } from '#/downloader';
 import ConfigHfzy from './config-hfzy.vue';
+import DownloaderFilter from './downloader-filter.vue';
+import { torrentMatchesFilter } from './downloader-filter-state';
 import DownloaderPlayButton from './downloader-play-button.vue';
 import RssEpisodeCount from './rss-episode-count.vue';
 import en from './i18n/en.json';
@@ -17,6 +19,8 @@ export interface LocalExtensionsRegistry {
     keywords: string[];
   }>;
   downloaderNameActions: Component<{ torrent: QbTorrentInfo }>[];
+  downloaderToolbars: Component[];
+  downloaderTorrentVisible: Array<(torrent: QbTorrentInfo) => boolean>;
   bangumiMetaExtras: Component<{ rule: BangumiRule }>[];
   i18n: Record<string, Record<string, unknown>>;
 }
@@ -56,6 +60,8 @@ export function registerHfzyExtension(ext: LocalExtensionsRegistry) {
       'player',
       'rss',
       'play',
+      '筛选',
+      '完成',
       'copy',
       'filter',
       'episode',
@@ -74,6 +80,8 @@ export function registerHfzyExtension(ext: LocalExtensionsRegistry) {
     ],
   });
   ext.downloaderNameActions.push(DownloaderPlayButton);
+  ext.downloaderToolbars.push(DownloaderFilter);
+  ext.downloaderTorrentVisible.push(torrentMatchesFilter);
   ext.bangumiMetaExtras.push(RssEpisodeCount);
   ext.i18n['zh-CN'] = deepMerge(ext.i18n['zh-CN'] ?? {}, zhCN);
   ext.i18n.en = deepMerge(ext.i18n.en ?? {}, en);

@@ -8,5 +8,6 @@
     "rss_form_season": true,
     "revision_conflict_policy": "hold",
     "revision_group_fallback": true,
-    "revision_single_video": true
+    "revision_single_video": true,
+    "downloader_filter": true
 }

@@ -13,6 +13,12 @@ const items = computed<SettingItem<HfzyMisc>[]>(() => [
     type: 'switch',
   },
   {
+    configKey: 'downloader_filter',
+    label: () => t('config.hfzy_set.downloader_filter'),
+    description: t('config.hfzy_set.downloader_filter_desc'),
+    type: 'switch',
+  },
+  {
     configKey: 'rss_name_priority',
     label: () => t('config.hfzy_set.rss_name_priority'),
     type: 'switch',

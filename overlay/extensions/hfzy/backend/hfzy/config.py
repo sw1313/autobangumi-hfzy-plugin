@@ -24,6 +24,7 @@ DEFAULT_HFZY: dict = {
     "revision_conflict_policy": "hold",
     "revision_group_fallback": True,
     "revision_single_video": True,
+    "downloader_filter": True,
 }
 
 
@@ -74,6 +75,10 @@ class HfzySettings(BaseModel):
         True,
         description="Count only videos when deciding a single-episode revision replacement",
     )
+    downloader_filter: bool = Field(
+        True,
+        description="Show a completed / incomplete filter on the downloader title row",
+    )
 
     def model_dump(self, *args, by_alias=True, **kwargs):
         return super().model_dump(*args, by_alias=by_alias, **kwargs)
@@ -106,6 +111,7 @@ def load_hfzy_dict() -> dict:
                     data.get("revision_group_fallback", True)
                 ),
                 "revision_single_video": bool(data.get("revision_single_video", True)),
+                "downloader_filter": bool(data.get("downloader_filter", True)),
             }
         )
     return result
@@ -125,6 +131,7 @@ def save_hfzy_dict(data: dict) -> dict:
         ),
         "revision_group_fallback": bool(data.get("revision_group_fallback", True)),
         "revision_single_video": bool(data.get("revision_single_video", True)),
+        "downloader_filter": bool(data.get("downloader_filter", True)),
     }
     HFZY_CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
     with open(HFZY_CONFIG_PATH, "w", encoding="utf-8") as handle:
