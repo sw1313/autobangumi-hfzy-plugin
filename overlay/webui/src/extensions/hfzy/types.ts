@@ -10,6 +10,8 @@ export interface HfzyMisc {
   revision_group_fallback: boolean;
   revision_single_video: boolean;
   downloader_filter: boolean;
+  special_rename: boolean;
+  tmdb_info: boolean;
 }
 
 export const defaultHfzyConfig: HfzyMisc = {
@@ -24,4 +26,6 @@ export const defaultHfzyConfig: HfzyMisc = {
   revision_group_fallback: true,
   revision_single_video: true,
   downloader_filter: true,
+  special_rename: true,
+  tmdb_info: true,
 };

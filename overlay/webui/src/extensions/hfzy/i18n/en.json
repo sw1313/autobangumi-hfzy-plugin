@@ -2,7 +2,7 @@
   "config": {
     "hfzy_set": {
       "title": "Huangfu misc features",
-      "desc": "The play button, downloader filter, RSS name priority, filtered count, RSS copy fix, filter-hit marks, adult TMDB titles, typed season priority, revision detection, and revision conflicts can be set separately.",
+      "desc": "The play button, downloader filter, RSS name priority, filtered count, RSS copy fix, filter-hit marks, adult TMDB titles, TMDB id, typed season priority, special rename, revision detection, and revision conflicts can be set separately.",
       "player_enable": "Downloader play button",
       "downloader_filter": "Downloader progress filter",
       "downloader_filter_desc": "Show a progress filter on the right of the Downloader title. Incomplete means a video whose progress is not 100%.",
@@ -15,8 +15,12 @@
       "rss_filter_hit_desc": "Draw an orange box around a filter tag when its pattern matches an RSS title.",
       "tmdb_include_adult": "Include adult TMDB titles",
       "tmdb_include_adult_desc": "Include titles TMDB marks as adult when searching TV and movies. Turn this off to leave them out.",
+      "tmdb_info": "Enter a TMDB id when adding",
+      "tmdb_info_desc": "When the parser is TMDB and aggregate RSS is off, choose TV or movie and enter an id. A filled id is used first, then the optional name, then the torrent title. Turning aggregate RSS on hides this row.",
       "rss_form_season": "Prefer the typed season",
       "rss_form_season_desc": "When collecting or subscribing, the season in the dialog wins over the season in the filename. A file marked season 3 is still downloaded as the season you typed. Every season in that RSS is saved under that season.",
+      "special_rename": "Rename specials as season 0",
+      "special_rename_desc": "When the subscription type is Special, TVSP, OVA, SP, and similar names become S00E. A bare TVSP is S00E01. SP02 keeps 02. Movies still rename from the title and do not use this switch.",
       "revision_group_fallback": "Recognize a higher revision in brackets",
       "revision_group_fallback_desc": "A [v2] tag is revision 2. When the release group contains a space and was not parsed, the first bracket is used so it can be compared with the unmarked release.",
       "revision_single_video": "A subtitle archive is not a second episode",
@@ -42,6 +46,14 @@
       "web": "Web player",
       "no_media": "No playable media file found",
       "resolve_failed": "Failed to resolve media URL"
+    }
+  },
+  "topbar": {
+    "add": {
+      "tmdb_info": "TMDB info",
+      "tmdb_id": "TMDB id",
+      "tmdb_tv": "TV",
+      "tmdb_movie": "Movie"
     }
   }
 }

@@ -2,7 +2,7 @@
   "config": {
     "hfzy_set": {
       "title": "皇甫朝云杂项功能",
-      "desc": "播放按钮、下载列表筛选、RSS 填入名称优先、过滤后集数、RSS 复制、过滤命中标记、TMDB 成人条目、填写季度优先、修订识别和修订冲突可以分别设置。",
+      "desc": "播放按钮、下载列表筛选、RSS 填入名称优先、过滤后集数、RSS 复制、过滤命中标记、TMDB 成人条目、TMDB 编号、填写季度优先、特别篇重命名、修订识别和修订冲突可以分别设置。",
       "player_enable": "下载列表播放按钮",
       "downloader_filter": "下载列表筛选",
       "downloader_filter_desc": "在下载器标题右侧按进度筛选。未完成是进度不是 100% 的视频。",
@@ -15,8 +15,12 @@
       "rss_filter_hit_desc": "某条过滤正则命中了 RSS 标题时，用橘黄色框标出这个标签。",
       "tmdb_include_adult": "打开 TMDB 成人条目",
       "tmdb_include_adult_desc": "搜索剧集和电影时包含 TMDB 标记为成人的动画。关闭后这些条目不会出现在搜索结果里。",
+      "tmdb_info": "添加时填写 TMDB 编号",
+      "tmdb_info_desc": "解析器是 TMDB 且没有打开聚合 RSS 时，可以选剧集或电影并填入编号。填写了编号就用这个编号；没填编号时用可选名称；名称也空着才按种子标题自动识别。打开聚合 RSS 后这一栏会隐藏。",
       "rss_form_season": "添加时以填写的季度为准",
       "rss_form_season_desc": "收集和订阅时，对话框里的季度优先于文件名上的季号。文件写着第三季、季度填 1，也会按第 1 季下载。同一条 RSS 里如果混了好几季，都会进这个季度。",
+      "special_rename": "特别篇按第 0 季重命名",
+      "special_rename_desc": "订阅内容类型是特别篇时，TVSP、OVA、SP、特别篇这类文件改成 S00E 编号。没有数字的 TVSP 为 S00E01，SP02 用 02。剧场版仍按标题重命名，不依赖这个开关。",
       "revision_group_fallback": "识别方括号里的更高修订版",
       "revision_group_fallback_desc": "标题里的 [v2] 会当成修订 2。发布组名字带空格、没有被解析出来时，用开头的方括号补上，才能和没有 v2 的那一集比较。",
       "revision_single_video": "字幕压缩包不算第二集",
@@ -42,6 +46,14 @@
       "web": "网页播放",
       "no_media": "未找到可播放媒体文件",
       "resolve_failed": "获取播放地址失败"
+    }
+  },
+  "topbar": {
+    "add": {
+      "tmdb_info": "TMDB 信息",
+      "tmdb_id": "TMDB 编号",
+      "tmdb_tv": "剧集",
+      "tmdb_movie": "电影"
     }
   }
 }

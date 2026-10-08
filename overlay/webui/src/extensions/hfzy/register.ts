@@ -2,13 +2,18 @@ import type { Component } from 'vue';
 import type { BangumiRule } from '#/bangumi';
 import type { Config } from '#/config';
 import type { QbTorrentInfo } from '#/downloader';
+import type { RSS } from '#/rss';
+import AddRssTmdb from './add-rss-tmdb.vue';
 import ConfigHfzy from './config-hfzy.vue';
 import DownloaderFilter from './downloader-filter.vue';
 import { torrentMatchesFilter } from './downloader-filter-state';
 import DownloaderPlayButton from './downloader-play-button.vue';
 import RssEpisodeCount from './rss-episode-count.vue';
+import { apiDownload } from '@/api/download';
+import type { BangumiAPI } from '#/bangumi';
 import en from './i18n/en.json';
 import zhCN from './i18n/zh-CN.json';
+import { tmdbHint } from './tmdb-hint';
 
 export interface LocalExtensionsRegistry {
   configSections: Array<{
@@ -22,6 +27,7 @@ export interface LocalExtensionsRegistry {
   downloaderToolbars: Component[];
   downloaderTorrentVisible: Array<(torrent: QbTorrentInfo) => boolean>;
   bangumiMetaExtras: Component<{ rule: BangumiRule }>[];
+  addRssExtras: Component<{ rss: RSS }>[];
   i18n: Record<string, Record<string, unknown>>;
 }
 
@@ -77,12 +83,38 @@ export function registerHfzyExtension(ext: LocalExtensionsRegistry) {
       '字幕',
       '压缩包',
       '皇甫朝云',
+      '编号',
     ],
   });
   ext.downloaderNameActions.push(DownloaderPlayButton);
   ext.downloaderToolbars.push(DownloaderFilter);
   ext.downloaderTorrentVisible.push(torrentMatchesFilter);
   ext.bangumiMetaExtras.push(RssEpisodeCount);
+  ext.addRssExtras.push(AddRssTmdb);
   ext.i18n['zh-CN'] = deepMerge(ext.i18n['zh-CN'] ?? {}, zhCN);
   ext.i18n.en = deepMerge(ext.i18n.en ?? {}, en);
 }
+
+const originalAnalysis = apiDownload.analysis.bind(apiDownload);
+apiDownload.analysis = async (rss) => {
+  const id = tmdbHint.id.trim();
+  if (!id || rss.aggregate || rss.parser !== 'tmdb') {
+    return originalAnalysis(rss);
+  }
+  const { data } = await axios.post<BangumiAPI>(
+    'api/v1/extensions/hfzy/rss-analysis',
+    {
+      url: rss.url,
+      name: rss.name,
+      aggregate: false,
+      parser: rss.parser,
+      tmdb_media_type: tmdbHint.mediaType,
+      tmdb_id: id,
+    }
+  );
+  return {
+    ...data,
+    filter: data.filter.split(','),
+    rss_link: data.rss_link.split(','),
+  };
+};

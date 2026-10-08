@@ -87,6 +87,7 @@ def install() -> None:
         from hfzy.revision_identity import install_revision_identity
         from hfzy.rss_priority import install_rss_name_priority
         from hfzy.season_priority import install_form_season
+        from hfzy.special_rename import install_special_rename
         from hfzy.tmdb_adult import install_tmdb_adult
         from module.conf import settings
     except ImportError as exc:
@@ -109,6 +110,10 @@ def install() -> None:
             install_form_season()
         except Exception:
             logger.exception("HFZY form season patch failed")
+        try:
+            install_special_rename()
+        except Exception:
+            logger.exception("HFZY special rename patch failed")
         _register_api_routes()
     except Exception:
         logger.exception("HFZY bootstrap failed")

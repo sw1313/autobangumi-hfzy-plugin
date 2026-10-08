@@ -48,9 +48,21 @@ const items = computed<SettingItem<HfzyMisc>[]>(() => [
     type: 'switch',
   },
   {
+    configKey: 'tmdb_info',
+    label: () => t('config.hfzy_set.tmdb_info'),
+    description: t('config.hfzy_set.tmdb_info_desc'),
+    type: 'switch',
+  },
+  {
     configKey: 'rss_form_season',
     label: () => t('config.hfzy_set.rss_form_season'),
     description: t('config.hfzy_set.rss_form_season_desc'),
+    type: 'switch',
+  },
+  {
+    configKey: 'special_rename',
+    label: () => t('config.hfzy_set.special_rename'),
+    description: t('config.hfzy_set.special_rename_desc'),
     type: 'switch',
   },
   {
