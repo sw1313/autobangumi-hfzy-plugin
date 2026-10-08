@@ -6,6 +6,9 @@ export interface HfzyMisc {
   rss_filter_hit: boolean;
   tmdb_include_adult: boolean;
   rss_form_season: boolean;
+  revision_conflict_policy: 'hold' | 'replace';
+  revision_group_fallback: boolean;
+  revision_single_video: boolean;
 }
 
 export const defaultHfzyConfig: HfzyMisc = {
@@ -16,4 +19,7 @@ export const defaultHfzyConfig: HfzyMisc = {
   rss_filter_hit: true,
   tmdb_include_adult: true,
   rss_form_season: true,
+  revision_conflict_policy: 'hold',
+  revision_group_fallback: true,
+  revision_single_video: true,
 };

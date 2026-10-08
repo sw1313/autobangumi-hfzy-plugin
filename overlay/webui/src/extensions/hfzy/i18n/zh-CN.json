@@ -2,7 +2,7 @@
   "config": {
     "hfzy_set": {
       "title": "皇甫朝云杂项功能",
-      "desc": "播放按钮、RSS 填入名称优先、过滤后集数、RSS 复制、过滤命中标记、TMDB 成人条目、填写季度优先可以分别开关。",
+      "desc": "播放按钮、RSS 填入名称优先、过滤后集数、RSS 复制、过滤命中标记、TMDB 成人条目、填写季度优先、修订识别和修订冲突可以分别设置。",
       "player_enable": "下载列表播放按钮",
       "rss_name_priority": "RSS 优先使用填入名称",
       "rss_episode_count": "季度后显示过滤后的版本和视频",
@@ -15,6 +15,14 @@
       "tmdb_include_adult_desc": "搜索剧集和电影时包含 TMDB 标记为成人的动画。关闭后这些条目不会出现在搜索结果里。",
       "rss_form_season": "添加时以填写的季度为准",
       "rss_form_season_desc": "收集和订阅时，对话框里的季度优先于文件名上的季号。文件写着第三季、季度填 1，也会按第 1 季下载。同一条 RSS 里如果混了好几季，都会进这个季度。",
+      "revision_group_fallback": "识别方括号里的更高修订版",
+      "revision_group_fallback_desc": "标题里的 [v2] 会当成修订 2。发布组名字带空格、没有被解析出来时，用开头的方括号补上，才能和没有 v2 的那一集比较。",
+      "revision_single_video": "字幕压缩包不算第二集",
+      "revision_single_video_desc": "判断能不能自动替换时只数视频。同一集旁边的字幕或字体压缩包、ass、srt 不再把这一集算成多文件。",
+      "revision_conflict_policy": "修订冲突",
+      "revision_conflict_policy_desc": "同一集已经有文件时，更高修订版（例如 01v2）怎么处理。挂起保留旧文件并记录冲突；替换会用新修订版换掉旧文件。",
+      "revision_hold": "挂起",
+      "revision_replace": "替换",
       "episode_invalid": "过滤无效",
       "episode_failed": "无法统计"
     }

@@ -47,6 +47,38 @@ const items = computed<SettingItem<HfzyMisc>[]>(() => [
     description: t('config.hfzy_set.rss_form_season_desc'),
     type: 'switch',
   },
+  {
+    configKey: 'revision_group_fallback',
+    label: () => t('config.hfzy_set.revision_group_fallback'),
+    description: t('config.hfzy_set.revision_group_fallback_desc'),
+    type: 'switch',
+  },
+  {
+    configKey: 'revision_single_video',
+    label: () => t('config.hfzy_set.revision_single_video'),
+    description: t('config.hfzy_set.revision_single_video_desc'),
+    type: 'switch',
+  },
+  {
+    configKey: 'revision_conflict_policy',
+    label: () => t('config.hfzy_set.revision_conflict_policy'),
+    description: t('config.hfzy_set.revision_conflict_policy_desc'),
+    type: 'select',
+    prop: {
+      items: [
+        {
+          id: 0,
+          value: 'hold',
+          label: t('config.hfzy_set.revision_hold'),
+        },
+        {
+          id: 1,
+          value: 'replace',
+          label: t('config.hfzy_set.revision_replace'),
+        },
+      ],
+    },
+  },
 ]);
 </script>
 

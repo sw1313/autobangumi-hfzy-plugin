@@ -84,6 +84,7 @@ def install() -> None:
     try:
         import hfzy  # noqa: F401
         from hfzy.config import attach_hfzy_settings
+        from hfzy.revision_identity import install_revision_identity
         from hfzy.rss_priority import install_rss_name_priority
         from hfzy.season_priority import install_form_season
         from hfzy.tmdb_adult import install_tmdb_adult
@@ -96,6 +97,10 @@ def install() -> None:
         _patch_settings_reload()
         attach_hfzy_settings(settings)
         install_rss_name_priority()
+        try:
+            install_revision_identity()
+        except Exception:
+            logger.exception("HFZY revision identity patch failed")
         try:
             install_tmdb_adult()
         except Exception:

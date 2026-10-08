@@ -65,6 +65,11 @@ export function registerHfzyExtension(ext: LocalExtensionsRegistry) {
       '成人',
       'tmdb',
       '季度',
+      '修订',
+      '冲突',
+      'v2',
+      '字幕',
+      '压缩包',
       '皇甫朝云',
     ],
   });

@@ -5,5 +5,8 @@
     "rss_copy_fix": true,
     "rss_filter_hit": true,
     "tmdb_include_adult": true,
-    "rss_form_season": true
+    "rss_form_season": true,
+    "revision_conflict_policy": "hold",
+    "revision_group_fallback": true,
+    "revision_single_video": true
 }

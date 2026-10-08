@@ -2,7 +2,7 @@
   "config": {
     "hfzy_set": {
       "title": "Huangfu misc features",
-      "desc": "The play button, RSS name priority, filtered count, RSS copy fix, filter-hit marks, adult TMDB titles, and typed season priority can be toggled separately.",
+      "desc": "The play button, RSS name priority, filtered count, RSS copy fix, filter-hit marks, adult TMDB titles, typed season priority, revision detection, and revision conflicts can be set separately.",
       "player_enable": "Downloader play button",
       "rss_name_priority": "Prefer filled RSS name",
       "rss_episode_count": "Show filtered versions and videos after the season",
@@ -15,6 +15,14 @@
       "tmdb_include_adult_desc": "Include titles TMDB marks as adult when searching TV and movies. Turn this off to leave them out.",
       "rss_form_season": "Prefer the typed season",
       "rss_form_season_desc": "When collecting or subscribing, the season in the dialog wins over the season in the filename. A file marked season 3 is still downloaded as the season you typed. Every season in that RSS is saved under that season.",
+      "revision_group_fallback": "Recognize a higher revision in brackets",
+      "revision_group_fallback_desc": "A [v2] tag is revision 2. When the release group contains a space and was not parsed, the first bracket is used so it can be compared with the unmarked release.",
+      "revision_single_video": "A subtitle archive is not a second episode",
+      "revision_single_video_desc": "Automatic replacement counts videos only. A subtitle or font archive, ass, or srt beside the episode does not make it a multi-file torrent.",
+      "revision_conflict_policy": "Revision conflict",
+      "revision_conflict_policy_desc": "What happens when a higher revision, such as 01v2, targets an episode that already has a file. Hold keeps the old file and records a conflict. Replace swaps in the newer revision.",
+      "revision_hold": "Hold",
+      "revision_replace": "Replace",
       "episode_invalid": "Invalid filter",
       "episode_failed": "Unavailable"
     }
