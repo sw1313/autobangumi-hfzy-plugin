@@ -65,8 +65,15 @@ function patchAnalysis() {
   window.fetch = (input, init = {}) => {
     const url = typeof input === "string" ? input : input?.url;
     const next = rewriteAnalysis(url, init.body);
-    if (!next) return originalFetch(input, init);
-    return originalFetch(next.url, { ...init, body: next.body });
+    const target = next ? next.url : url;
+    const body = next ? next.body : applyAdvanced(url, init.body);
+    const response = originalFetch(target, { ...init, body });
+    if (String(url || "").includes("api/v1/rss/analysis")) {
+      response.then((result) => {
+        result.clone().text().then(noteRule).catch(() => {});
+      }).catch(() => {});
+    }
+    return response;
   };
   const proto = XMLHttpRequest.prototype;
   const originalOpen = proto.open;
@@ -77,32 +84,412 @@ function patchAnalysis() {
     return originalOpen.call(this, method, url, ...rest);
   };
   proto.send = function send(body) {
-    const next = rewriteAnalysis(this.__hfzyUrl, body);
-    if (!next) return originalSend.call(this, body);
-    originalOpen.call(this, this.__hfzyMethod || "POST", next.url, true);
-    return originalSend.call(this, next.body);
+    const url = String(this.__hfzyUrl || "");
+    if (url.includes("api/v1/rss/analysis")) {
+      this.addEventListener("load", () => noteRule(this.responseText), { once: true });
+    }
+    const next = rewriteAnalysis(url, body);
+    if (next) {
+      originalOpen.call(this, this.__hfzyMethod || "POST", next.url, true);
+      return originalSend.call(this, next.body);
+    }
+    return originalSend.call(this, applyAdvanced(url, body));
   };
+}
+
+const rssExtra = {
+  season_offset: 0,
+  air_weekday: null,
+  episode_type: "episode",
+  preferred_group: "",
+  preferred_resolution: "",
+};
+
+const WEEKDAYS = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+const EPISODE_TYPES = [
+  ["episode", "剧集"],
+  ["movie", "剧场版"],
+  ["special", "特别篇"],
+];
+const RESOLUTIONS = ["2160p", "1080p", "720p"];
+
+function noteRule(text) {
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    return;
+  }
+  const rule = data && data.official_title ? data : data?.data;
+  if (!rule || typeof rule !== "object") return;
+  rssExtra.season_offset = Number(rule.season_offset) || 0;
+  rssExtra.episode_type = rule.episode_type || "episode";
+  rssExtra.air_weekday = rule.air_weekday == null || rule.air_weekday === "" ? null : Number(rule.air_weekday);
+  rssExtra.preferred_group = rule.preferred_group || "";
+  rssExtra.preferred_resolution = rule.preferred_resolution || "";
+  syncAdvancedFromExtra();
+}
+
+function advancedPanel() {
+  return [...document.querySelectorAll(".advanced-content")].find(
+    (node) =>
+      node.querySelector("[data-hfzy-season-offset]") &&
+      node.getClientRects().length
+  );
+}
+
+function applyAdvanced(url, body) {
+  if (!showRssAdvanced || typeof body !== "string") return body;
+  const targetUrl = String(url || "");
+  if (!targetUrl.includes("api/v1/rss/collect") && !targetUrl.includes("api/v1/rss/subscribe")) {
+    return body;
+  }
+  const panel = advancedPanel();
+  if (!panel) return body;
+  let parsed;
+  try {
+    parsed = JSON.parse(body);
+  } catch {
+    return body;
+  }
+  const target = parsed && parsed.data && parsed.rss ? parsed.data : parsed;
+  if (!target || typeof target !== "object") return body;
+  const season = panel.querySelector("[data-hfzy-season-offset]");
+  const type = panel.querySelector("[data-hfzy-type]");
+  const weekday = panel.querySelector("[data-hfzy-weekday]");
+  const group = panel.querySelector("[data-hfzy-group]");
+  const resolution = panel.querySelector("[data-hfzy-resolution]");
+  if (season) target.season_offset = Number(season.value) || 0;
+  if (type) target.episode_type = type.dataset.value || "episode";
+  if (weekday) {
+    const value = weekday.dataset.value ?? "";
+    target.air_weekday = value === "" ? null : Number(value);
+    target.weekday_locked = target.air_weekday !== null;
+  }
+  if (group) target.preferred_group = group.value.trim() || null;
+  if (resolution) target.preferred_resolution = resolution.value.trim() || null;
+  return JSON.stringify(parsed);
+}
+
+function copyScope(from, to) {
+  if (!from) return;
+  for (const name of from.getAttributeNames()) {
+    if (name.startsWith("data-v-")) to.setAttribute(name, "");
+  }
+}
+
+function weekdayOptions() {
+  return [["", "未知"], ...WEEKDAYS.map((label, index) => [String(index), label])];
+}
+
+function optionLabel(options, value) {
+  return options.find(([item]) => item === value)?.[1] || options[0]?.[1] || "";
+}
+
+function markDirty(node) {
+  node.addEventListener("input", () => {
+    node.dataset.hfzyDirty = "1";
+  });
+  node.addEventListener("change", () => {
+    node.dataset.hfzyDirty = "1";
+  });
+}
+
+function writeIfClean(node, assign) {
+  if (!node || node.dataset.hfzyDirty === "1" || document.activeElement === node) return;
+  assign(node);
+}
+
+function syncAdvancedFromExtra() {
+  document.querySelectorAll(".advanced-content").forEach((content) => {
+    writeIfClean(content.querySelector("[data-hfzy-season-offset]"), (node) => {
+      node.value = String(rssExtra.season_offset || 0);
+    });
+    writeIfClean(content.querySelector("[data-hfzy-weekday]"), (node) => {
+      const value = rssExtra.air_weekday == null ? "" : String(rssExtra.air_weekday);
+      node.dataset.value = value;
+      const label = node.querySelector("[data-hfzy-menu-label]");
+      if (label) label.textContent = optionLabel(weekdayOptions(), value);
+    });
+    writeIfClean(content.querySelector("[data-hfzy-type]"), (node) => {
+      node.dataset.value = rssExtra.episode_type || "episode";
+      const label = node.querySelector("[data-hfzy-menu-label]");
+      if (label) label.textContent = optionLabel(EPISODE_TYPES, node.dataset.value);
+    });
+    writeIfClean(content.querySelector("[data-hfzy-group]"), (node) => {
+      node.value = rssExtra.preferred_group || "";
+    });
+    writeIfClean(content.querySelector("[data-hfzy-resolution]"), (node) => {
+      node.value = rssExtra.preferred_resolution || "";
+    });
+  });
+}
+
+function closeAdvancedMenu() {
+  document.querySelector("[data-hfzy-advanced-menu]")?.remove();
+}
+
+function openAdvancedMenu(trigger, options, current, onPick) {
+  closeAdvancedMenu();
+  closeTmdbMenu();
+  const menu = document.createElement("div");
+  menu.dataset.hfzyAdvancedMenu = "1";
+  menu.setAttribute("role", "listbox");
+  const box = trigger.getBoundingClientRect();
+  menu.style.cssText = `position:fixed;z-index:4002;top:${Math.round(box.bottom + 4)}px;left:${Math.round(box.left)}px;min-width:${Math.round(Math.max(box.width, 140))}px;padding:4px;background:var(--color-surface);border-radius:var(--radius-md, 8px);box-shadow:0 6px 16px rgba(15,23,42,.12);`;
+  options.forEach(([value, label]) => {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.setAttribute("role", "option");
+    const selected = current === value;
+    item.style.cssText = `display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;height:34px;padding:0 12px;border:0;border-radius:6px;background:${selected ? "var(--color-surface-hover)" : "transparent"};color:var(--color-text);font:inherit;font-size:14px;cursor:pointer;text-align:left;`;
+    const text = document.createElement("span");
+    text.textContent = label;
+    item.appendChild(text);
+    if (selected) {
+      const mark = document.createElement("span");
+      mark.textContent = "✓";
+      mark.style.color = "var(--color-primary)";
+      item.appendChild(mark);
+    }
+    item.addEventListener("mouseenter", () => {
+      item.style.background = "var(--color-surface-hover)";
+    });
+    item.addEventListener("mouseleave", () => {
+      item.style.background = current === value ? "var(--color-surface-hover)" : "transparent";
+    });
+    item.addEventListener("click", (event) => {
+      event.stopPropagation();
+      onPick(value, label);
+      closeAdvancedMenu();
+    });
+    menu.appendChild(item);
+  });
+  document.body.appendChild(menu);
+}
+
+function advancedRow(content, labelText) {
+  const sampleRow = content.querySelector(".advanced-row");
+  const sampleLabel = content.querySelector(".advanced-label");
+  const row = document.createElement("div");
+  row.className = "advanced-row";
+  row.dataset.hfzyAdvanced = "1";
+  copyScope(sampleRow, row);
+  const label = document.createElement("label");
+  label.className = "advanced-label";
+  label.textContent = labelText;
+  copyScope(sampleLabel, label);
+  const control = document.createElement("div");
+  control.className = "advanced-control offset-controls";
+  copyScope(sampleRow?.querySelector(".advanced-control"), control);
+  row.append(label, control);
+  return { row, control };
+}
+
+function controlShell(sample, width) {
+  const shell = document.createElement("span");
+  shell.className = sample?.className || "ab-input offset-input";
+  copyScope(sample, shell);
+  shell.style.width = width;
+  shell.style.maxWidth = width;
+  shell.style.flex = "0 0 auto";
+  return shell;
+}
+
+function bareInput(sample) {
+  const source = sample?.querySelector("input");
+  const input = document.createElement("input");
+  copyScope(source || sample, input);
+  input.style.textAlign = "inherit";
+  markDirty(input);
+  return input;
+}
+
+function chevron() {
+  const icon = document.createElement("span");
+  icon.innerHTML =
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+  icon.style.cssText = "display:inline-flex;flex:0 0 auto;color:var(--color-text-muted);";
+  return icon;
+}
+
+function menuControl(sample, options, value, attr) {
+  const shell = controlShell(sample, "160px");
+  const button = document.createElement("button");
+  button.type = "button";
+  button.setAttribute(attr, "1");
+  button.dataset.value = value ?? "";
+  button.setAttribute("aria-haspopup", "listbox");
+  button.style.cssText =
+    "display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;height:100%;margin:0;padding:0;border:0;background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer;text-align:left;";
+  const label = document.createElement("span");
+  label.dataset.hfzyMenuLabel = "1";
+  label.textContent = optionLabel(options, value ?? "");
+  button.append(label, chevron());
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const open = document.querySelector("[data-hfzy-advanced-menu]");
+    if (open && open.dataset.owner === attr) {
+      closeAdvancedMenu();
+      return;
+    }
+    openAdvancedMenu(shell, options, button.dataset.value ?? "", (picked, text) => {
+      button.dataset.value = picked;
+      button.dataset.hfzyDirty = "1";
+      label.textContent = text;
+    });
+    const menu = document.querySelector("[data-hfzy-advanced-menu]");
+    if (menu) menu.dataset.owner = attr;
+  });
+  shell.appendChild(button);
+  return shell;
+}
+
+function ensureRssAdvanced() {
+  if (!showRssAdvanced) {
+    closeAdvancedMenu();
+    document.querySelectorAll("[data-hfzy-advanced]").forEach((node) => node.remove());
+    return;
+  }
+  document.querySelectorAll(".advanced-content").forEach((content) => {
+    const ready =
+      content.querySelector("[data-hfzy-season-offset]") &&
+      content.querySelector("[data-hfzy-weekday]") &&
+      content.querySelector("[data-hfzy-type]") &&
+      content.querySelector("[data-hfzy-group]") &&
+      content.querySelector("[data-hfzy-resolution]");
+    if (ready) return;
+    content.querySelectorAll("[data-hfzy-advanced]").forEach((node) => node.remove());
+    const plainRows = [
+      ...content.querySelectorAll(":scope > .advanced-row:not(.advanced-row--tags)"),
+    ];
+    if (plainRows.length !== 1) return;
+    const sample = content.querySelector(".offset-input");
+    const episodeRow = plainRows[0];
+
+    const season = advancedRow(content, "季度偏移");
+    const seasonShell = controlShell(sample, "70px");
+    const seasonInput = bareInput(sample);
+    seasonInput.type = "number";
+    seasonInput.dataset.hfzySeasonOffset = "1";
+    seasonInput.value = String(rssExtra.season_offset || 0);
+    seasonInput.style.textAlign = "center";
+    seasonShell.appendChild(seasonInput);
+    season.control.appendChild(seasonShell);
+    episodeRow.before(season.row);
+
+    const weekday = advancedRow(content, "放送星期");
+    weekday.control.appendChild(
+      menuControl(
+        sample,
+        weekdayOptions(),
+        rssExtra.air_weekday == null ? "" : String(rssExtra.air_weekday),
+        "data-hfzy-weekday"
+      )
+    );
+
+    const type = advancedRow(content, "内容类型");
+    type.control.appendChild(
+      menuControl(sample, EPISODE_TYPES, rssExtra.episode_type || "episode", "data-hfzy-type")
+    );
+
+    const group = advancedRow(content, "偏好字幕组");
+    const groupShell = controlShell(sample, "160px");
+    const groupInput = bareInput(sample);
+    groupInput.type = "text";
+    groupInput.placeholder = "ANi";
+    groupInput.dataset.hfzyGroup = "1";
+    groupInput.value = rssExtra.preferred_group || "";
+    groupInput.style.textAlign = "left";
+    groupShell.appendChild(groupInput);
+    group.control.appendChild(groupShell);
+
+    const resolution = advancedRow(content, "偏好分辨率");
+    const resolutionShell = controlShell(sample, "160px");
+    const resolutionInput = bareInput(sample);
+    resolutionInput.type = "text";
+    resolutionInput.placeholder = "自动检测";
+    resolutionInput.dataset.hfzyResolution = "1";
+    resolutionInput.value = rssExtra.preferred_resolution || "";
+    resolutionInput.style.textAlign = "left";
+    const resolutionButton = document.createElement("button");
+    resolutionButton.type = "button";
+    resolutionButton.setAttribute("aria-label", "选择分辨率");
+    resolutionButton.style.cssText =
+      "display:inline-flex;align-items:center;margin:0;padding:0;border:0;background:transparent;color:inherit;cursor:pointer;";
+    resolutionButton.appendChild(chevron());
+    const resolutionOptions = [
+      ["", "自动检测"],
+      ...RESOLUTIONS.map((item) => [item, item]),
+    ];
+    resolutionButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const open = document.querySelector("[data-hfzy-advanced-menu]");
+      if (open && open.dataset.owner === "data-hfzy-resolution") {
+        closeAdvancedMenu();
+        return;
+      }
+      openAdvancedMenu(
+        resolutionShell,
+        resolutionOptions,
+        resolutionInput.value.trim(),
+        (picked) => {
+          resolutionInput.value = picked;
+          resolutionInput.dataset.hfzyDirty = "1";
+        }
+      );
+      const menu = document.querySelector("[data-hfzy-advanced-menu]");
+      if (menu) menu.dataset.owner = "data-hfzy-resolution";
+    });
+    resolutionShell.append(resolutionInput, resolutionButton);
+    resolution.control.appendChild(resolutionShell);
+
+    const hint = document.createElement("p");
+    hint.dataset.hfzyAdvanced = "1";
+    hint.textContent = "设置后，RSS 刷新时若存在偏好版本，会跳过不匹配的重复发布。";
+    hint.style.cssText = "margin:0;font-size:11px;line-height:1.5;color:var(--color-text-secondary);";
+
+    const box = document.createElement("div");
+    box.dataset.hfzyAdvanced = "1";
+    box.style.cssText = "display:flex;flex-direction:column;gap:12px;";
+    box.append(weekday.row, type.row, group.row, resolution.row, hint);
+    episodeRow.after(box);
+  });
 }
 
 function parserName(anchor) {
   const select = anchor.querySelector(".parser-select");
   if (!select) return "";
-  const label =
-    select.querySelector(
-      ".n-base-selection-input__content, .n-base-selection-overlay__wrapper"
-    ) || select.querySelector(".n-base-selection");
-  const text = (label?.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
-  return text.split(" ")[0] || "";
+  const nodes = select.querySelectorAll(
+    ".n-base-selection-overlay__wrapper, .n-base-selection-input__content, .n-base-selection-label"
+  );
+  for (const node of nodes) {
+    const token = (node.textContent || "").replace(/\s+/g, " ").trim().toLowerCase().split(" ")[0];
+    if (token) return token;
+  }
+  return "";
 }
 
 function aggregateOn(anchor) {
-  const scope = anchor.parentElement || anchor;
-  const toggles = scope.querySelectorAll("[role='switch']");
-  for (const toggle of toggles) {
-    if (toggle.getAttribute("aria-checked") === "true") return true;
-    if (String(toggle.className).includes("--active")) return true;
-  }
-  return false;
+  const toggle = anchor.querySelector("[role='switch']");
+  if (!toggle) return false;
+  return (
+    toggle.getAttribute("aria-checked") === "true" ||
+    String(toggle.className).includes("--active")
+  );
+}
+
+function watchTmdbControls(anchor) {
+  if (anchor.dataset.hfzyTmdbWatch) return;
+  anchor.dataset.hfzyTmdbWatch = "1";
+  const schedule = () => requestAnimationFrame(() => ensureTmdbRow());
+  new MutationObserver(schedule).observe(anchor, {
+    subtree: true,
+    childList: true,
+    characterData: true,
+    attributes: true,
+    attributeFilter: ["aria-checked", "class"],
+  });
 }
 
 function tmdbAllowed(anchor) {
@@ -183,10 +570,12 @@ let showTmdb = true;
 let showFilter = true;
 let showPlay = true;
 let showEtaLine = true;
+let showRssAdvanced = true;
 
 function ensureTmdbRow() {
   const anchor = document.querySelector(".options-row:not([data-hfzy-tmdb])");
   if (!anchor) return;
+  watchTmdbControls(anchor);
   if (!showTmdb) {
     const hidden = anchor.parentElement?.querySelector("[data-hfzy-tmdb]");
     if (hidden) hidden.style.display = "none";
@@ -199,10 +588,11 @@ function ensureTmdbRow() {
   }
   if (!tmdbAllowed(anchor)) {
     tmdb.id = "";
+    closeTmdbMenu();
     if (row) {
       row.style.display = "none";
       const input = row.querySelector("input");
-      if (input) input.value = "";
+      if (input && input.value) input.value = "";
     }
     return;
   }
@@ -477,6 +867,14 @@ function watchFilterPlace() {
     ) {
       closeTmdbMenu();
     }
+    const advancedMenu = document.querySelector("[data-hfzy-advanced-menu]");
+    if (
+      advancedMenu &&
+      !advancedMenu.contains(event.target) &&
+      !event.target?.closest?.("[data-hfzy-weekday], [data-hfzy-type], [aria-label='选择分辨率']")
+    ) {
+      closeAdvancedMenu();
+    }
     if (!filterMenu) return;
     if (filterRoot?.contains(event.target) || filterMenu.contains(event.target)) return;
     closeFilterMenu();
@@ -576,6 +974,7 @@ async function hfzySettings() {
     showFilter = settingsCache.downloader_filter !== false;
     showPlay = settingsCache.player_enable !== false;
     showEtaLine = settingsCache.downloader_eta_single_line !== false;
+    showRssAdvanced = settingsCache.rss_advanced_complete !== false;
   } catch {
     settingsCache = {};
   }
@@ -734,6 +1133,7 @@ function installHfzy(host) {
   watchFilterPlace();
   const tick = () => {
     ensureTmdbRow();
+    ensureRssAdvanced();
     ensureFilter();
     applyFilter(filterMode);
     ensurePlay(activeHost);

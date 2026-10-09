@@ -54,6 +54,11 @@ class HfzyOptions(BaseModel):
         title="添加时以填写的季度为准",
         description="收集和订阅时，对话框里的季度优先于文件名上的季号。",
     )
+    rss_advanced_complete: bool = Field(
+        True,
+        title="补齐添加时的高级设置",
+        description="添加 RSS 的高级设置补上编辑规则里已有的季度偏移、放送星期、内容类型、偏好字幕组和偏好分辨率。",
+    )
     special_rename: bool = Field(
         True,
         title="特别篇按第 0 季重命名",

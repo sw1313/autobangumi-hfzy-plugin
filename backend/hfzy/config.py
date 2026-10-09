@@ -21,6 +21,7 @@ DEFAULT_HFZY: dict = {
     "rss_filter_hit": True,
     "tmdb_include_adult": True,
     "rss_form_season": True,
+    "rss_advanced_complete": True,
     "revision_conflict_policy": "hold",
     "revision_group_fallback": True,
     "revision_single_video": True,
@@ -65,6 +66,10 @@ class HfzySettings(BaseModel):
     rss_form_season: bool = Field(
         True,
         description="Use the season typed in Add RSS instead of the filename season",
+    )
+    rss_advanced_complete: bool = Field(
+        True,
+        description="Show the edit-rule advanced fields while adding RSS",
     )
     revision_conflict_policy: str = Field(
         "hold",
@@ -119,6 +124,7 @@ def load_hfzy_dict() -> dict:
                 "rss_filter_hit": bool(data.get("rss_filter_hit", True)),
                 "tmdb_include_adult": bool(data.get("tmdb_include_adult", True)),
                 "rss_form_season": bool(data.get("rss_form_season", True)),
+                "rss_advanced_complete": bool(data.get("rss_advanced_complete", True)),
                 "revision_conflict_policy": normalize_revision_policy(
                     data.get("revision_conflict_policy", "hold")
                 ),
@@ -146,6 +152,7 @@ def save_hfzy_dict(data: dict) -> dict:
         "rss_filter_hit": bool(data.get("rss_filter_hit", True)),
         "tmdb_include_adult": bool(data.get("tmdb_include_adult", True)),
         "rss_form_season": bool(data.get("rss_form_season", True)),
+        "rss_advanced_complete": bool(data.get("rss_advanced_complete", True)),
         "revision_conflict_policy": normalize_revision_policy(
             data.get("revision_conflict_policy", "hold")
         ),
