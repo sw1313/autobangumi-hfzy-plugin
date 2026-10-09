@@ -1,105 +1,63 @@
-# AutoBangumi HFZY Plugin
+# AutoBangumi 杂项插件
 
-皇甫朝云的 AutoBangumi 杂项插件。设置页是单独一块，各项开关互不影响，配置写在
-`config/hfzy.json`，不进入 AutoBangumi 主配置。
+适配 AutoBangumi 4.x 的本地插件。设置页只有一组开关，各项互不影响，配置写在运行目录的 `config/hfzy.json`，不写入 AutoBangumi 主配置。
 
-本仓库只包含这个杂项插件，不包含 CD2 插件、AutoBangumi 核心源码、真实配置、
-下载数据或数据库。
+`3.x/` 是给 AutoBangumi 3.x 留的归档。4.x 使用仓库根目录这一套，不要再把 `overlay` 合并进主程序，也不需要改 WebUI 的本地扩展注册。
 
 ## 功能
 
-- 下载列表播放按钮。
-- 非聚合订阅填写了名称时，TMDB 查询优先使用这个名称。
-- 添加或编辑规则时，在季度后面显示过滤后的版本数和视频数。版本按去掉集号后的发布差异计算，第 12 集的 [END]、修订版 v2、标题末尾的 `.mp4.torrent` 都不会单独成版；合集不会计入。
-- 用 http 打开页面时，RSS 源旁边的复制按钮仍能复制完整链接。
-- 某条过滤正则命中 RSS 标题时，对应标签套上橘黄色框。
-- 搜索剧集和电影时包含 TMDB 标记为成人的动画。同名但没有动画类型的条目仍会跳过。
-- 收集和订阅时，对话框里填写的季度优先于文件名上的季号。同一条 RSS 里如果混了好几季，都会进这个季度。
-- 方括号里的 `[v2]` 识别为更高修订版。发布组名字带空格时，用标题开头的方括号补上。
-- 判断单集时只数视频。字幕或字体压缩包、ass、srt 不再把这一集算成多文件。
-- 同一集已经有文件时，更高修订版可以挂起，或替换旧文件。默认挂起。
-
-## 更新
-
-### 2026-10-08
-
-- 特别篇可以按第 0 季重命名。开关在杂项里，电视特别篇、OVA、SP 改成 S00E。没有数字的 TVSP 为 S00E01。剧场版仍按标题重命名。
-- 添加 RSS 且解析器是 TMDB、没有打开聚合 RSS 时，可以选剧集或电影并填写 TMDB 编号。编号优先于可选名称，名称优先于种子标题。打开聚合 RSS 后这一栏隐藏并清掉编号。
-- 添加对话框只在主程序里留一个插槽来渲染插件组件。编号查询和特别篇重命名都在插件里。
-- 杂项设置增加修订冲突，可选挂起或替换。
-- 补上带空格发布组的修订识别，`[Nekomoe kissaten]...[v2]` 这种标题可以和没有 v2 的同一集比较。
-- 自动替换时忽略视频以外的字幕和字体附件。
-
-只数视频会替换 `revision_file_count`。重命名代码调用这个函数后，字幕压缩包开关才会生效。
-
-## 目录
-
-```text
-overlay/extensions/hfzy/                 后端插件、启动入口和测试
-overlay/webui/src/extensions/hfzy/       WebUI 设置与下载页组件
-config/hfzy.example.json                 配置示例
-```
+- 下载列表播放按钮：只出现在下载器里，并且可以关闭。
+- 下载列表筛选：在下载器标题右侧按进度筛选。未完成会藏起全部视频都已完成的番组，已完成只留下全部完成的番组。
+- ETA 保持一行：剩余时间按文字宽度单行显示，不再把表格行撑高。
+- RSS 优先使用填入名称：非聚合订阅填写了名称时，TMDB 查询优先用这个名称。
+- 季度后显示过滤后的版本和视频：添加或编辑规则时，在季度后面显示过滤后剩下的版本数和视频数。
+- 修复 RSS 复制按钮：用 http 打开页面时，RSS 源旁边的复制图标也能复制完整链接，并保留原来的对勾动画。
+- 标记命中的过滤规则：某条过滤正则命中了 RSS 标题时，这个标签会套上橘黄色框。
+- 打开 TMDB 成人条目：搜索剧集和电影时包含 TMDB 标记为成人的动画。同名但没有动画类型的条目仍会跳过。
+- 添加时填写 TMDB 编号：解析器是 TMDB 且没有打开聚合 RSS 时，可以选剧集或电影并填入编号。编号优先于可选名称，可选名称优先于种子标题。打开聚合 RSS 或换了别的解析器后，这一项会隐藏并清空。
+- 添加时以填写的季度为准：收集和订阅时，对话框里的季度优先于文件名上的季号。
+- 特别篇按第 0 季重命名：订阅内容类型是特别篇时，TVSP、OVA、SP、特别篇改成 S00E。剧场版不依赖这个开关。
+- 识别方括号里的更高修订版：`[v2]` 视为修订 2。发布组名字带空格时，用标题开头的方括号补上。
+- 字幕压缩包不算第二集：判断能不能自动替换时只数视频。
+- 修订冲突：同一集已有文件时，更高修订版可以选择挂起或替换。默认挂起。
 
 ## 安装
 
-将 `overlay` 下的目录合并到 AutoBangumi 源码挂载目录：
+需要 AutoBangumi 4.0 或更新的 4.x。这个插件没有签名，要先在设置里允许未签名插件（`plugins.allow_unsigned`）。
 
-```bash
-cp -a overlay/. /volume1/docker/autobangumi/app/
+把仓库根目录里除 `3.x` 以外的文件放到：
+
+```text
+config/plugins/local/hfzy
 ```
 
-Docker Compose 挂载插件目录，并把后端加入 `PYTHONPATH`：
+目录名必须是 `hfzy`，和 `plugin.toml` 里的 id 一致。重启容器后在插件设置里开关各项功能。
 
 ```yaml
 volumes:
-  - /volume1/docker/autobangumi/app/extensions:/extensions
-
-environment:
-  - PYTHONPATH=/extensions/hfzy/backend
+  - /path/to/this-repo:/app/config/plugins/local/hfzy
 ```
 
-启动 AutoBangumi 前执行 `/extensions/hfzy/backend/ab_entry.py`。源码挂载部署
-可以在 entrypoint 中设置：
-
-```bash
-export AB_APP_DIR=/app
-export PYTHONPATH="/extensions/hfzy/backend:${PYTHONPATH}"
-exec python /extensions/hfzy/backend/ab_entry.py
-```
-
-如果同时使用 CD2 插件，两个后端目录都要放进 `PYTHONPATH`，并由各自的
-bootstrap 注册。
-
-WebUI 需要在项目的本地扩展注册器中调用
-`registerHfzyExtension(registry)`，然后重新构建 WebUI。
+下载器、添加 RSS 上的按钮和提示由插件自己插入，不需要重新编译 WebUI。
 
 ## 配置
 
-复制示例配置到 AutoBangumi 的持久化配置目录：
-
-```bash
-cp config/hfzy.example.json /volume1/docker/autobangumi/config/hfzy.json
-```
-
-请勿提交真实的 `config/hfzy.json`。
+真实的 `config/hfzy.json` 只放在 AutoBangumi 的配置目录。不要把这份运行配置提交到仓库。
 
 ## 测试
 
 ```bash
-PYTHONPATH=overlay/extensions/hfzy/backend \
-pytest overlay/extensions/hfzy/tests -q
+PYTHONPATH=backend pytest tests -q
 ```
 
-## 兼容性
+## 兼容
 
-该插件通过启动时 bootstrap 注册设置和 API，并在运行时修补 RSS、TMDB
-相关调用，不修改 AutoBangumi 的 `module/` 核心源码。上游内部接口发生变化时
-仍可能需要适配。
+4.x 从插件入口加载，不修改 AutoBangumi 的 `module/`。3.x 的 overlay 安装方式写在 `3.x/README.md`。
 
 ## 安全说明
 
-- 仓库只提供开关默认值，不包含账号、令牌或下载地址。
-- 播放接口使用 AutoBangumi 现有登录态签发短时流令牌，仓库里没有密钥。
+- 仓库只包含插件代码和默认行为，不含账号、令牌或内网地址。
+- 接口沿用 AutoBangumi 的登录状态。
 
 ## 许可证
 

@@ -11,3 +11,7 @@ config/hfzy.json
 .env
 .env.*
 !.env.example
+
+# Runtime files that must stay out of the repository.
+backend/config/
+**/.jwt_secret

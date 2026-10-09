@@ -1,0 +1,15 @@
+[plugin]
+id = "hfzy"
+name = "皇甫朝云杂项"
+version = "1.0.0"
+sdk = ">=0.4,<1"
+entry = "hfzy_plugin:HfzyPlugin"
+description = "特别篇重命名、修订识别、添加 RSS 时的 TMDB 信息，以及其他杂项开关"
+authors = ["sw1313"]
+permissions = ["net.connect"]
+
+[[plugin.ui]]
+slot = "dashboard.widget"
+element = "ab-plugin-hfzy-boot"
+entry = "web/ui.js"
+title = { zh-CN = "杂项", en-US = "Extras" }
