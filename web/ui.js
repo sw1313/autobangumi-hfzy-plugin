@@ -33,14 +33,21 @@ function hideSlot(element) {
   }
 }
 
+function requestData(body) {
+  if (typeof body === "string") {
+    try {
+      return JSON.parse(body);
+    } catch {
+      return null;
+    }
+  }
+  if (body && typeof body === "object") return body;
+  return null;
+}
+
 function rewriteAnalysis(url, body) {
   if (!String(url).includes("api/v1/rss/analysis") || !tmdb.id.trim()) return null;
-  let data;
-  try {
-    data = JSON.parse(body);
-  } catch {
-    return null;
-  }
+  const data = requestData(body);
   if (!data || data.aggregate || data.parser !== "tmdb") return null;
   return {
     url: String(url).replace(
@@ -52,6 +59,7 @@ function rewriteAnalysis(url, body) {
       name: data.name || "",
       aggregate: false,
       parser: data.parser || "tmdb",
+      downloader_id: data.downloader_id || null,
       tmdb_media_type: tmdb.mediaType,
       tmdb_id: tmdb.id.trim(),
     }),
@@ -78,10 +86,18 @@ function patchAnalysis() {
   const proto = XMLHttpRequest.prototype;
   const originalOpen = proto.open;
   const originalSend = proto.send;
+  const originalSetHeader = proto.setRequestHeader;
   proto.open = function open(method, url, ...rest) {
     this.__hfzyUrl = url;
     this.__hfzyMethod = method;
+    this.__hfzyOpenRest = rest;
+    this.__hfzyHeaders = [];
     return originalOpen.call(this, method, url, ...rest);
+  };
+  proto.setRequestHeader = function setRequestHeader(name, value) {
+    this.__hfzyHeaders = this.__hfzyHeaders || [];
+    this.__hfzyHeaders.push([name, value]);
+    return originalSetHeader.call(this, name, value);
   };
   proto.send = function send(body) {
     const url = String(this.__hfzyUrl || "");
@@ -90,7 +106,17 @@ function patchAnalysis() {
     }
     const next = rewriteAnalysis(url, body);
     if (next) {
-      originalOpen.call(this, this.__hfzyMethod || "POST", next.url, true);
+      const credentials = this.withCredentials;
+      originalOpen.call(
+        this,
+        this.__hfzyMethod || "POST",
+        next.url,
+        ...(this.__hfzyOpenRest || [true])
+      );
+      this.withCredentials = credentials;
+      for (const [name, value] of this.__hfzyHeaders || []) {
+        originalSetHeader.call(this, name, value);
+      }
       return originalSend.call(this, next.body);
     }
     return originalSend.call(this, applyAdvanced(url, body));
@@ -457,8 +483,12 @@ function ensureRssAdvanced() {
   });
 }
 
+function parserControl(anchor) {
+  return anchor.querySelector(".ab-select, .parser-select");
+}
+
 function parserName(anchor) {
-  const select = anchor.querySelector(".parser-select");
+  const select = parserControl(anchor);
   if (!select) return "";
   const nodes = select.querySelectorAll(
     ".n-base-selection-overlay__wrapper, .n-base-selection-input__content, .n-base-selection-label"
@@ -572,16 +602,22 @@ let showPlay = true;
 let showEtaLine = true;
 let showRssAdvanced = true;
 
+function mirrorField(sample, tag, className) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  copyScope(sample, node);
+  return node;
+}
+
 function ensureTmdbRow() {
   const anchor = document.querySelector(".options-row:not([data-hfzy-tmdb])");
   if (!anchor) return;
   watchTmdbControls(anchor);
+  let row = anchor.querySelector(":scope > [data-hfzy-tmdb]");
   if (!showTmdb) {
-    const hidden = anchor.parentElement?.querySelector("[data-hfzy-tmdb]");
-    if (hidden) hidden.style.display = "none";
+    if (row) row.style.display = "none";
     return;
   }
-  let row = anchor.parentElement?.querySelector("[data-hfzy-tmdb]");
   if (row?.querySelector("select")) {
     row.remove();
     row = null;
@@ -597,19 +633,32 @@ function ensureTmdbRow() {
     return;
   }
   if (!row) {
-    row = document.createElement("div");
+    const field = parserControl(anchor)?.closest(".ab-field") || anchor.querySelector(".ab-field");
+    row = mirrorField(field, "div", field ? "ab-field" : "");
     row.dataset.hfzyTmdb = "1";
-    row.innerHTML = `
-      <div data-hfzy-type style="display:flex;align-items:center;gap:12px;flex:0 0 auto;">
-        <label>TMDB 信息</label>
-        <button type="button" data-hfzy-type-trigger aria-haspopup="listbox" aria-label="TMDB 类型">
-          <span data-hfzy-type-label>${tmdbTypeLabel()}</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-        </button>
-      </div>
+    const main = mirrorField(field?.querySelector(".ab-field-main"), "div", "ab-field-main");
+    const heading = mirrorField(field?.querySelector(".ab-field-heading"), "div", "ab-field-heading");
+    const label = mirrorField(field?.querySelector(".ab-field-label, .option-label"), "span", "ab-field-label");
+    label.textContent = "TMDB 信息";
+    const control = mirrorField(field?.querySelector(".ab-field-control"), "div", "ab-field-control");
+    control.dataset.hfzyType = "1";
+    control.style.display = "flex";
+    control.style.alignItems = "center";
+    control.style.flexWrap = "wrap";
+    control.style.gap = "8px";
+    control.innerHTML = `
+      <button type="button" data-hfzy-type-trigger aria-haspopup="listbox" aria-label="TMDB 类型">
+        <span data-hfzy-type-label>${tmdbTypeLabel()}</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
       <input type="text" inputmode="numeric" placeholder="TMDB 编号" aria-label="TMDB 编号">
     `;
-    anchor.insertAdjacentElement("afterend", row);
+    heading.appendChild(label);
+    main.append(heading, control);
+    row.appendChild(main);
+    const parserField = parserControl(anchor)?.closest(".ab-field, .option-item");
+    if (parserField) parserField.after(row);
+    else anchor.appendChild(row);
     const trigger = row.querySelector("[data-hfzy-type-trigger]");
     const input = row.querySelector("input");
     input.value = tmdb.id;
@@ -622,20 +671,11 @@ function ensureTmdbRow() {
       tmdb.id = input.value;
     });
   }
-  const selection = anchor.querySelector(".parser-select .n-base-selection");
-  const anchorStyle = getComputedStyle(anchor);
-  row.style.display = "flex";
-  row.style.flexWrap = "wrap";
-  row.style.alignItems = "center";
-  row.style.gap = "16px";
-  row.style.margin = "0";
-  row.style.boxSizing = "border-box";
-  row.style.padding = anchorStyle.padding;
-  row.style.background = anchorStyle.backgroundColor;
-  row.style.borderRadius = anchorStyle.borderRadius;
-  const label = anchor.querySelector(".option-label");
-  const ownLabel = row.querySelector("label");
-  if (label && ownLabel) {
+  row.style.display = "";
+  const selection = parserControl(anchor)?.querySelector(".n-base-selection");
+  const label = anchor.querySelector(".ab-field-label, .option-label");
+  const ownLabel = row.querySelector(".ab-field-label, label");
+  if (label && ownLabel && label !== ownLabel) {
     const labelStyle = getComputedStyle(label);
     ownLabel.style.fontSize = labelStyle.fontSize;
     ownLabel.style.fontWeight = labelStyle.fontWeight;

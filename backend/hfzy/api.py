@@ -111,6 +111,7 @@ class TmdbRssAnalysisBody(BaseModel):
     name: str | None = None
     aggregate: bool = False
     parser: str = "tmdb"
+    downloader_id: str | None = None
     tmdb_media_type: str = "tv"
     tmdb_id: str = ""
 
@@ -164,12 +165,17 @@ async def rss_analysis(body: TmdbRssAnalysisBody):
         name=body.name,
         aggregate=False,
         parser=body.parser or "tmdb",
+        downloader_id=body.downloader_id or None,
     )
     # The id is the title source. A filled name, then the filename, only fill
     # the group, season, and filter when the feed can be parsed.
     data = await RSSAnalyser().link_to_data(rss)
     if isinstance(data, ResponseModel):
-        return bangumi_from_tmdb(info, media_type, rss.url)
-    if not getattr(data, "rss_link", None):
-        data.rss_link = rss.url
-    return apply_tmdb_record(data, media_type, info)
+        data = bangumi_from_tmdb(info, media_type, rss.url)
+    else:
+        if not getattr(data, "rss_link", None):
+            data.rss_link = rss.url
+        data = apply_tmdb_record(data, media_type, info)
+    if hasattr(data, "downloader_id"):
+        data.downloader_id = rss.downloader_id
+    return data
